@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ابحث عن فيلم أو مسلسل</title>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #124364;
+            color: #000;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-top: 60px;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            background-color: #022020;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+
+        .search-container input {
+            padding: 12px;
+            font-size: 18px;
+            font-family: 'Cairo', sans-serif;
+            border: none;
+            border-radius: 5px;
+            width: 250px;
+            outline: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border: 2px solid #011C44;
+        }
+
+        .search-container button {
+            padding: 12px;
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f1c40f;
+            color: #310003;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .search-container button:hover {
+            background-color: #e67e22;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+
+        img {
+            max-width: 200px;
+            margin-top: 10px;
+        }
+
+        .info-row {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-row button {
+            margin-left: 10px;
+            background-color: #777;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .info-row button:hover {
+            background-color: #555;
+        }
+
+        .input-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        textarea {
+            width: 300px;
+            height: 100px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #310003;
+            font-family: 'Cairo', sans-serif;
+            font-weight: bold;
+            resize: none;
+        }
+
+        .cast-list {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        .cast-item {
+            margin-top: 10px;
+        }
+
+        /* تنسيق المواسم */
+        .season-list {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .season-item {
+            text-align: center;
+            max-width: 200px;
+        }
+
+        .season-item img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+
+        .season-item button {
+            background-color: #f1c40f;
+            color: #310003;
+            border: none;
+            padding: 8px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .season-item button:hover {
+            background-color: #e67e22;
+        }
+
+        .toggle-arrow {
+            cursor: pointer;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>ابحث عن فيلم أو مسلسل</h1>
+    <div class="search-container">
+        <input type="text" id="searchTerm" placeholder="ابحث عن فيلم أو مسلسل بالاسم">
+        <button onclick="searchMovieByName()">بحث بالاسم</button>
+    </div>
+
+<div id="result"></div>
+
+<script>
+    const apiKey = '4b1125dc507cd0f303b025b30d6311dd';
+
+    async function searchMovieByName() {
+        const searchTerm = document.getElementById('searchTerm').value;
+        if (!searchTerm) {
+            alert('الرجاء إدخال اسم الفيلم أو المسلسل');
+            return;
+        }
+
+        const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${searchTerm}&language=ar`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.results.length > 0) {
+                const result = data.results[0];
+                const title = result.title || result.name;
+                const description = result.overview || "لا يوجد وصف متاح";
+                const releaseDate = result.release_date || result.first_air_date || "غير متاح";
+                const imagePath = result.poster_path;
+                const imageUrl = `https://image.tmdb.org/t/p/original${imagePath}`;
+                const mediaType = result.media_type;
+                const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${result.id}?api_key=${apiKey}&language=ar`;
+
+                const detailsResponse = await fetch(detailsUrl);
+                const detailsData = await detailsResponse.json();
+
+                const trailerUrl = detailsData.videos?.results?.find(video => video.type === 'Trailer')?.key;
+                
+
+                let seasonsSection = '';
+                if (mediaType === 'tv') {
+                    const seasons = detailsData.seasons || [];
+                    seasonsSection = seasons.map((season, index) => `
+                        <div class="season-item">
+                            <img src="https://image.tmdb.org/t/p/original${season.poster_path}" alt="${season.name}" />
+                            <p>${season.name}</p>
+                            <button onclick="copyImageUrl('https://image.tmdb.org/t/p/original${season.poster_path}')">نسخ صورة الموسم</button>
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('result').innerHTML = `
+                    <h2>${title}</h2>
+                    <img src="${imageUrl}" alt="${title}">
+                    <div class="info-row">
+                        <strong>الوصف:</strong>
+                        <textarea id="description">${description}</textarea>
+                        <button onclick="copyText('description')">نسخ النص</button>
+                    </div>
+                    <div class="info-row">
+                        <strong>تاريخ الإصدار:</strong>
+                        <textarea id="releaseDate">${releaseDate}</textarea>
+                        <button onclick="copyText('releaseDate')">نسخ النص</button>
+                    </div>
+                   
+                    ${mediaType === 'tv' ? `
+                        <div>
+                            <h3>المواسم</h3>
+                            <div class="season-list">${seasonsSection}</div>
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `<p>لم يتم العثور على نتائج.</p>`;
+            }
+        } catch (error) {
+            console.error(error);
+            document.getElementById('result').innerHTML = `<p>حدث خطأ أثناء البحث. الرجاء المحاولة مرة أخرى.</p>`;
+        }
+    }
+
+    // دالة نسخ النصوص
+    function copyText(id) {
+        const textArea = document.getElementById(id);
+        textArea.select();
+        textArea.setSelectionRange(0, 99999); // للهواتف
+        document.execCommand("copy");
+        alert("تم نسخ النص إلى الحافظة!");
+    }
+
+    // دالة نسخ رابط الصورة
+    function copyImageUrl(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('تم نسخ رابط الصورة!');
+        }).catch(err => {
+            console.error('فشل النسخ', err);
+        });
+    }
+</script>
+</body>
+</html>
+
+
+
